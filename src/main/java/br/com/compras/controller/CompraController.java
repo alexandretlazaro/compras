@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.compras.model.Cart;
 import br.com.compras.model.Item;
 import br.com.compras.model.ItemCart;
-import br.com.compras.repository.CartRepository;
+import br.com.compras.service.impl.CartServiceImpl;
 import br.com.compras.service.impl.ItemCartServiceImpl;
 import br.com.compras.service.impl.ItemServiceImpl;
 
@@ -30,7 +30,7 @@ import br.com.compras.service.impl.ItemServiceImpl;
 public class CompraController {
 
 	@Autowired
-	private CartRepository cartRepository;
+	private CartServiceImpl cartService;
 
 	@Autowired
 	private ItemServiceImpl itemService;
@@ -45,7 +45,7 @@ public class CompraController {
 
 		try {
 
-			Optional<Cart> cart = cartRepository.findById(idCarrinho);
+			Optional<Cart> cart = cartService.findById(idCarrinho);
 
 			Cart _cart = cart.get();
 
@@ -88,7 +88,7 @@ public class CompraController {
 
 				myCart.getItemsCartList().add(itemCart);
 
-				cartRepository.save(myCart);
+				cartService.save(myCart);
 
 				itemCart.setCart(myCart);
 
@@ -108,7 +108,7 @@ public class CompraController {
 
 		try {
 
-			Optional<Cart> cartOpt = cartRepository.findById(cartId);
+			Optional<Cart> cartOpt = cartService.findById(cartId);
 
 			Optional<Item> itemOpt = itemService.getItemById(itemId);
 			ItemCart itemCart = new ItemCart();
@@ -124,7 +124,7 @@ public class CompraController {
 
 					_cart.getItemsCartList().add(itemCart);
 
-					cartRepository.save(_cart);
+					cartService.save(_cart);
 
 					itemCart.setCart(_cart);
 
