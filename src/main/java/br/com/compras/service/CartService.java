@@ -7,6 +7,5 @@ import br.com.compras.model.Cart;
 public interface CartService {
 
 	public Cart save(Cart cart);
-	
 	public Optional<Cart> findById(Long id);
 }

@@ -26,7 +26,7 @@ public class Cart {
 	private Set<ItemCart> itemsCartList = new HashSet<>();
 	
 	@Transient
-	private Double valorTotal;
+	private Double valorTotal = 0.0;
 	
 	public Long getId() {
 		return id;

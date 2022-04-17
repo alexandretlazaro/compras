@@ -25,6 +25,8 @@ public class ItemCart {
 	@JoinColumn(name = "item_id", nullable = false)
 	private Item item;
 	
+	private Integer quantidade;
+	
 	public Long getId() {
 		return id;
 	}
@@ -47,6 +49,14 @@ public class ItemCart {
 
 	public void setItem(Item item) {
 		this.item = item;
+	}
+
+	public Integer getQuantidade() {
+		return quantidade;
+	}
+
+	public void setQuantidade(Integer quantidade) {
+		this.quantidade = quantidade;
 	}
 	
 }
