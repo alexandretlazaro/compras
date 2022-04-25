@@ -9,5 +9,4 @@ public interface ItemService {
 
 	public List<Item> getItens(String produto);
 	public Optional<Item> getItemById(Long id);
-	public Item salvarItem(Item item);
 }

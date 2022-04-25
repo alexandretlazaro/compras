@@ -11,7 +11,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "item_cart")
-public class ItemCart {
+public class ItemCart implements Comparable<ItemCart> {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -58,5 +58,11 @@ public class ItemCart {
 	public void setQuantidade(Integer quantidade) {
 		this.quantidade = quantidade;
 	}
+
+	@Override
+	public int compareTo(ItemCart o) {
+		return this.getId().compareTo(o.getId());
+	}
+
 	
 }

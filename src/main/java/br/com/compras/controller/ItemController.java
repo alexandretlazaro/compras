@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.compras.model.Categoria;
 import br.com.compras.model.Item;
+import br.com.compras.service.impl.CategoriaServiceImpl;
 import br.com.compras.service.impl.ItemServiceImpl;
 
 @RequestMapping("/api")
@@ -28,6 +30,9 @@ public class ItemController {
 	public ItemController(ItemServiceImpl itemService) {
 		this.itemService = itemService;
 	}
+	
+	@Autowired
+	private CategoriaServiceImpl categoriaService;
 
 	@GetMapping("/item")
 	private ResponseEntity<List<Item>> getProducts(@RequestParam(required = false) String produto) {
@@ -68,6 +73,12 @@ public class ItemController {
 
 		try {
 
+			Optional<Categoria> categoriaOpt = categoriaService.findById(item.getCategoria().getId());
+			
+			Categoria _categoria = categoriaOpt.get();
+			
+			item.setCategoria(_categoria);
+			
 			Item _item = itemService.salvarItem(item);
 
 			return new ResponseEntity<>(_item, HttpStatus.CREATED);

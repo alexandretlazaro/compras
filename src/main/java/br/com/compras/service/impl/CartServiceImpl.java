@@ -2,6 +2,8 @@ package br.com.compras.service.impl;
 
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ public class CartServiceImpl implements CartService {
 	@Autowired
 	CartRepository repository;
 	
+	@Transactional
 	@Override
 	public Cart save(Cart cart) {
 		return repository.save(cart);

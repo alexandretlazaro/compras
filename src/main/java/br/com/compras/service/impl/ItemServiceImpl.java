@@ -3,6 +3,8 @@ package br.com.compras.service.impl;
 import java.util.List;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,7 @@ public class ItemServiceImpl implements ItemService {
 		return itemRepository.findById(id);
 	}
 
+	@Transactional
 	public Item salvarItem(Item item) {
 
 		return itemRepository.save(item);

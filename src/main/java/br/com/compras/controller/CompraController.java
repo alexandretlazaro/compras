@@ -1,7 +1,10 @@
 package br.com.compras.controller;
 
+import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,6 +37,8 @@ public class CompraController {
 
 	@Autowired
 	private ItemCartServiceImpl itemCartService;
+	
+	private static final DecimalFormat df = new DecimalFormat("0.00");
 
 	@GetMapping("/cart/{idCarrinho}")
 	private ResponseEntity<Set<ItemCart>> getAllItemsFromCart(@PathVariable Long idCarrinho) {
@@ -43,20 +48,20 @@ public class CompraController {
 			Optional<Cart> cart = cartService.findById(idCarrinho);
 
 			Cart _cart = cart.get();
-			
+
 			double soma = getValorTotal(_cart);
-			
+
 			_cart.setValorTotal(soma);
 			
-			System.out.println(_cart.getValorTotal());
+			Set<ItemCart> itemCartSet = new TreeSet<>(_cart.getItemsCartList());
 
-			return new ResponseEntity<>(_cart.getItemsCartList(), HttpStatus.OK);
+			return new ResponseEntity<>(itemCartSet, HttpStatus.OK);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
+
 	/*@GetMapping("/cart/{idCarrinho}")
 	private ResponseEntity<List<ItemCart>> getAllItemsFromCart(@PathVariable Long idCarrinho) {
 
@@ -67,17 +72,17 @@ public class CompraController {
 			Optional<Cart> cart = cartService.findById(idCarrinho);
 
 			Cart _cart = cart.get();
-			
+
 			Iterator<ItemCart> it = _cart.getItemsCartList().iterator();
 
 			while(it.hasNext()) {
 				productsList.add(it.next().getItem());
 			}
-			
+
 			double soma = productsList.stream().mapToDouble(f -> f.getValor()).sum();
-			
+
 			_cart.setValorTotal(soma);
-			
+
 			System.out.println(_cart.getValorTotal());
 
 			Collections.sort(productsList, new Comparator<Item>() {
@@ -87,7 +92,7 @@ public class CompraController {
 					return o1.getId().compareTo(o2.getId());
 				}
 			});
-			
+
 			return new ResponseEntity<>(productsList, HttpStatus.OK);
 
 		} catch (Exception e) {
@@ -99,23 +104,23 @@ public class CompraController {
 	private ResponseEntity<Cart> addItem(@PathVariable("itemId") Long itemId, @RequestBody ItemCart itemCart) {
 
 		try {
-			
+
 			Cart myCart = new Cart();
 
 			Optional<Item> itemOpt = itemService.getItemById(itemId);
-			
+
 			if(itemOpt.isPresent()) {
 
 				Item _item = itemOpt.get();
-				
+
 				itemCart.setQuantidade(itemCart.getQuantidade());
-				
+
 				itemCart.setItem(_item);
 
 				myCart.getItemsCartList().add(itemCart);
-				
+
 				double soma = getValorTotal(myCart);
-				
+
 				myCart.setValorTotal(soma);
 
 				cartService.save(myCart);
@@ -123,7 +128,7 @@ public class CompraController {
 				itemCart.setCart(myCart);
 
 				itemCartService.save(itemCart);
-				
+
 			}
 
 			return new ResponseEntity<>(myCart, HttpStatus.CREATED);
@@ -142,29 +147,55 @@ public class CompraController {
 			Optional<Cart> cartOpt = cartService.findById(cartId);
 
 			Optional<Item> itemOpt = itemService.getItemById(itemId);
-
+			
+			List<ItemCart> _itemCartList = itemCartService.findByCart(cartOpt.get());
+			
+			boolean itemExistente = false;
+			
 			if(cartOpt.isPresent()) {
 
 				if(itemOpt.isPresent()) {
+					
+					for(ItemCart ic : _itemCartList) {
+						
+						if(itemOpt.get().getId() == ic.getItem().getId()) {
+							itemExistente = true;
+							break;
+						}
+					}
 
 					Item _item = itemOpt.get();
 					Cart _cart = cartOpt.get();
 					
-					itemCart.setQuantidade(itemCart.getQuantidade());
+					if(itemExistente) {
+						ItemCart _itemCart = itemCartService.findByCartByItem(_cart, _item);
+						
+						_itemCart.setQuantidade(_itemCart.getQuantidade() + itemCart.getQuantidade());
+						
+						double soma = getValorTotal(_cart);
 
-					itemCart.setItem(_item);
+						_cart.setValorTotal(soma);
 
-					_cart.getItemsCartList().add(itemCart);
-					
-					double soma = getValorTotal(_cart);
-					
-					_cart.setValorTotal(soma);
+						cartService.save(_cart);
+						
+						itemCartService.save(_itemCart);
+					}
+					else {
+						
+						itemCart.setItem(_item);
+						
+						_cart.getItemsCartList().add(itemCart);
 
-					cartService.save(_cart);
+						double soma = getValorTotal(_cart);
 
-					itemCart.setCart(_cart);
+						_cart.setValorTotal(soma);
 
-					itemCartService.save(itemCart);
+						cartService.save(_cart);
+
+						itemCart.setCart(_cart);
+
+						itemCartService.save(itemCart);
+					}
 				}
 			}
 
@@ -177,22 +208,50 @@ public class CompraController {
 	}
 
 	@DeleteMapping("/cart/{cartId}/{itemId}")
-	private ResponseEntity<HttpStatus> deleteItemCart(@PathVariable Long cartId, @PathVariable Long itemId) {
+	private ResponseEntity<HttpStatus> deleteItemCart(@PathVariable Long cartId, @PathVariable Long itemId, @RequestBody ItemCart itemCart) {
 
 		try {
 
-			itemCartService.deleteByIdCartByidItem(cartId, itemId);
-			
+			Integer quantidade = itemCart.getQuantidade();
+
+			Optional<Item> itemOpt = itemService.getItemById(itemId);
+			Optional<Cart> cartOpt = cartService.findById(cartId);
+
+			if(cartOpt.isPresent() && itemOpt.isPresent()) {
+
+				itemCart.setCart(cartOpt.get());
+				itemCart.setItem(itemOpt.get());
+
+				ItemCart _itemCart = itemCartService.findByCartByItem(cartOpt.get(), itemOpt.get());
+
+				System.out.println(_itemCart.getId());
+
+				if(_itemCart.getQuantidade() == quantidade) {
+					itemCartService.deleteByIdCartByidItem(cartId, itemId);
+					
+				}
+				else if(quantidade < _itemCart.getQuantidade()) {
+					
+					_itemCart.setQuantidade(_itemCart.getQuantidade() - quantidade);
+					itemCartService.save(_itemCart);
+				}
+				else {
+					return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				}
+			}
+
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
+
 	private double getValorTotal(Cart myCart) {
-		
+
 		double soma = myCart.getItemsCartList().stream().mapToDouble(f -> f.getItem().getValor() * f.getQuantidade()).sum();
+
+		soma = Double.parseDouble(df.format(soma).replaceAll(",", "."));
 		
 		return soma;
 	}
