@@ -30,7 +30,7 @@ public class ItemController {
 	public ItemController(ItemServiceImpl itemService) {
 		this.itemService = itemService;
 	}
-	
+
 	@Autowired
 	private CategoriaServiceImpl categoriaService;
 
@@ -40,7 +40,7 @@ public class ItemController {
 		List<Item> productsList = new ArrayList<Item>();
 
 		try {
-			
+
 			productsList = itemService.getItens(produto);
 
 			return new ResponseEntity<>(productsList, HttpStatus.OK);
@@ -53,19 +53,25 @@ public class ItemController {
 
 	@GetMapping("/item/{id}")
 	private ResponseEntity<Item> getProductById(@PathVariable Long id) {
-		
+
 		try {
 
 			Optional<Item> product = itemService.getItemById(id);
+
+			if(!product.isEmpty()) {
+
+
+				Item _item = product.get();
+
+				return new ResponseEntity<>(_item, HttpStatus.OK);
+			}
 			
-			Item _item = product.get();
-			
-			return new ResponseEntity<>(_item, HttpStatus.OK);
-			
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
 		} catch (Exception e) {
 			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
+
 	}
 
 	@PostMapping("/item")
@@ -74,14 +80,19 @@ public class ItemController {
 		try {
 
 			Optional<Categoria> categoriaOpt = categoriaService.findById(item.getCategoria().getId());
-			
-			Categoria _categoria = categoriaOpt.get();
-			
-			item.setCategoria(_categoria);
-			
-			Item _item = itemService.salvarItem(item);
 
-			return new ResponseEntity<>(_item, HttpStatus.CREATED);
+			if(!categoriaOpt.isEmpty()) {
+
+				Categoria _categoria = categoriaOpt.get();
+
+				item.setCategoria(_categoria);
+
+				Item _item = itemService.salvarItem(item);
+
+				return new ResponseEntity<>(_item, HttpStatus.CREATED);
+			}
+
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
 		} catch (Exception e) {
 			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
